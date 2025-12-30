@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getAuthTokens, logout as apiLogout } from '../api/auth';
+import { logout, getAccessToken } from '../services/authService';
 
 export function useAuth() {
   const [loggedIn, setLoggedIn] = useState(false);
@@ -7,7 +7,7 @@ export function useAuth() {
 
   useEffect(() => {
     (async () => {
-      const tokens = await getAuthTokens();
+      const tokens = await getAccessToken();
       setLoggedIn(!!tokens);
       setBootstrapping(false);
     })();
@@ -18,7 +18,7 @@ export function useAuth() {
   };
 
   const handleLogout = async () => {
-    await apiLogout();
+    await logout();
     setLoggedIn(false);
   };
 

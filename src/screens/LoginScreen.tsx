@@ -1,117 +1,219 @@
 import React, { useState } from 'react';
-import { StatusBar } from 'expo-status-bar';
 import {
-  ActivityIndicator,
-  StyleSheet,
+  View,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
-import { login, AuthError } from '../api/auth';
+import { MaterialIcons } from '@expo/vector-icons';
+import { login } from '../services/authService';
 
 type LoginScreenProps = {
-  onLoginSuccess: () => void;
+  onLogin: () => void;
+  onNavigateToSignup: () => void;
 };
 
-export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
+export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onNavigateToSignup }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const handleLogin = async () => {
-    setError(null);
+    if (!username.trim() || !password.trim()) {
+      Alert.alert('Error', 'Please enter both username and password');
+      return;
+    }
 
     try {
       setLoading(true);
-      await login(username, password);
-      onLoginSuccess();
-    } catch (e) {
-      if (e instanceof AuthError) {
-        setError(e.message);
-      } else {
-        console.error(e);
-        setError('An error occurred while logging in. Please try again.');
-      }
+      await login(username.trim(), password);
+      onLogin();
+    } catch (error) {
+      console.error('Login error:', error);
+      Alert.alert('Login Failed', error instanceof Error ? error.message : 'Invalid credentials');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <View style={styles.container}>
-      <TextInput
-        style={styles.input}
-        placeholder="Username"
-        autoCapitalize="none"
-        value={username}
-        onChangeText={setUsername}
-      />
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      <View style={styles.content}>
+        {/* Logo/Header */}
+        <View style={styles.header}>
+          <MaterialIcons name="video-library" size={80} color="#007AFF" />
+          <Text style={styles.title}>Motionary</Text>
+          <Text style={styles.subtitle}>Practice Library</Text>
+        </View>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-      />
+        {/* Form */}
+        <View style={styles.form}>
+          {/* Username Input */}
+          <View style={styles.inputContainer}>
+            <MaterialIcons name="person" size={20} color="#8E8E93" style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              placeholder="Username"
+              value={username}
+              onChangeText={setUsername}
+              autoCapitalize="none"
+              autoCorrect={false}
+              editable={!loading}
+            />
+          </View>
 
-      {error ? <Text style={styles.errorText}>{error}</Text> : null}
+          {/* Password Input */}
+          <View style={styles.inputContainer}>
+            <MaterialIcons name="lock" size={20} color="#8E8E93" style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              placeholder="Password"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={!showPassword}
+              autoCapitalize="none"
+              autoCorrect={false}
+              editable={!loading}
+            />
+            <TouchableOpacity
+              onPress={() => setShowPassword(!showPassword)}
+              style={styles.eyeIcon}
+              disabled={loading}
+            >
+              <MaterialIcons
+                name={showPassword ? 'visibility' : 'visibility-off'}
+                size={20}
+                color="#8E8E93"
+              />
+            </TouchableOpacity>
+          </View>
 
-      <TouchableOpacity
-        style={[styles.button, loading && styles.buttonDisabled]}
-        onPress={handleLogin}
-        disabled={loading}
-      >
-        {loading ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.buttonText}>Log In</Text>
-        )}
-      </TouchableOpacity>
+          {/* Login Button */}
+          <TouchableOpacity
+            style={[styles.loginButton, loading && styles.loginButtonDisabled]}
+            onPress={handleLogin}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#FFFFFF" />
+            ) : (
+              <Text style={styles.loginButtonText}>Login</Text>
+            )}
+          </TouchableOpacity>
 
-      <StatusBar style="auto" />
-    </View>
+          {/* Forgot Password */}
+          <TouchableOpacity style={styles.forgotPassword} disabled={loading}>
+            <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Sign Up Link */}
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>Don't have an account? </Text>
+          <TouchableOpacity onPress={onNavigateToSignup} disabled={loading}>
+            <Text style={styles.signupLink}>Sign Up</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
+    backgroundColor: '#F2F2F7',
+  },
+  content: {
+    flex: 1,
     justifyContent: 'center',
-    paddingHorizontal: 24,
+    paddingHorizontal: 32,
+  },
+  header: {
+    alignItems: 'center',
+    marginBottom: 48,
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#000000',
+    marginTop: 16,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#8E8E93',
+    marginTop: 4,
+  },
+  form: {
+    width: '100%',
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+  },
+  inputIcon: {
+    marginRight: 12,
   },
   input: {
-    width: '100%',
-    height: 48,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    marginBottom: 12,
+    flex: 1,
+    height: 50,
+    fontSize: 16,
+    color: '#000000',
   },
-  button: {
-    width: '100%',
-    height: 48,
+  eyeIcon: {
+    padding: 4,
+  },
+  loginButton: {
     backgroundColor: '#007AFF',
-    borderRadius: 8,
-    alignItems: 'center',
+    borderRadius: 12,
+    height: 50,
     justifyContent: 'center',
+    alignItems: 'center',
     marginTop: 8,
   },
-  buttonDisabled: {
-    opacity: 0.7,
+  loginButtonDisabled: {
+    opacity: 0.6,
   },
-  buttonText: {
-    color: '#fff',
+  loginButtonText: {
+    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
   },
-  errorText: {
-    color: 'red',
-    marginBottom: 4,
+  forgotPassword: {
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  forgotPasswordText: {
+    color: '#007AFF',
+    fontSize: 14,
+  },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 32,
+  },
+  footerText: {
+    fontSize: 14,
+    color: '#8E8E93',
+  },
+  signupLink: {
+    fontSize: 14,
+    color: '#007AFF',
+    fontWeight: '600',
   },
 });

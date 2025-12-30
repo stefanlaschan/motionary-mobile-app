@@ -1,12 +1,12 @@
 import React from 'react';
 import type { ComponentProps } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import Ionicons from '@expo/vector-icons/Ionicons';
+import { MaterialIcons } from '@expo/vector-icons';
 import { HomeScreen } from '../screens/HomeScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
 
 const Tab = createBottomTabNavigator();
-type IoniconsName = ComponentProps<typeof Ionicons>['name'];
+type MaterialIconName = ComponentProps<typeof MaterialIcons>['name'];
 
 type MainTabsProps = {
   onLogout: () => void;
@@ -17,15 +17,15 @@ export const MainTabs: React.FC<MainTabsProps> = ({ onLogout }) => (
     screenOptions={({ route }) => ({
       headerShown: false,
       tabBarIcon: ({ color, size }) => {
-        let iconName: IoniconsName;
+        let iconName: MaterialIconName;
 
         if (route.name === 'Home') {
-          iconName = 'home';
+          iconName = 'home-filled';
         } else {
           iconName = 'person';
         }
 
-        return <Ionicons name={iconName} size={size} color={color} />;
+        return <MaterialIcons name={iconName} size={size} color={color} />;
       },
     })}
   >
