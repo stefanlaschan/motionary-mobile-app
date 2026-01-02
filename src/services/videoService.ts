@@ -3,10 +3,6 @@ import type { VideoResponse, VideoCreateRequest } from '../types/video';
 
 const API_BASE_URL = 'http://localhost:8080/api';
 
-/**
- * Private helper to retrieve the JWT and build headers.
- * We use SecureStore for consistency with your AuthService.
- */
 const getAuthHeaders = async (isMultipart = false): Promise<HeadersInit> => {
   const token = await SecureStore.getItemAsync('access_token');
   const headers: Record<string, string> = {
@@ -67,7 +63,7 @@ export const uploadVideo = async (
 
   const response = await fetch(`${API_BASE_URL}/videos/upload`, {
     method: 'POST',
-    headers: await getAuthHeaders(true), // true for multipart
+    headers: await getAuthHeaders(true),
     body: formData,
   });
 

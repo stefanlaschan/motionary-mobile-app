@@ -71,7 +71,7 @@ export const logout = async (): Promise<void> => {
   }
 };
 
-export const signup = async (data: SignupRequest): Promise<AuthResponse> => {
+export const signup = async (data: SignupRequest): Promise<void> => {
   const signupResponse = await fetch(`${AUTH_API_BASE_URL}/auth/signup`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -86,13 +86,10 @@ export const signup = async (data: SignupRequest): Promise<AuthResponse> => {
     throw new Error(errorText || 'Signup failed');
   }
 
-  try {
-    const authData = await login(data.username, data.password);
-
-    return authData;
-  } catch (loginError) {
-    throw new Error('Account created, but automatic login failed. Please login manually.');
-  }
+  return;
 };
 
-export const getAccessToken = () => SecureStore.getItemAsync('access_token');
+
+export const getAccessToken = async () => {
+  return await SecureStore.getItemAsync('access_token');
+};

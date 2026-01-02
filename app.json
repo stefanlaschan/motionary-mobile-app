@@ -1,7 +1,8 @@
 {
   "expo": {
-    "name": "wedance-mobile-app",
-    "slug": "wedance-mobile-app",
+    "name": "motionary-mobile-app",
+    "slug": "motionary-mobile-app",
+    "scheme": "motionary-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "",
@@ -27,7 +28,9 @@
       "favicon": ""
     },
     "plugins": [
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-router",
+      "expo-video"
     ]
   }
 }
