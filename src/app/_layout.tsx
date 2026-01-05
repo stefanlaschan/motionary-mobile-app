@@ -1,6 +1,7 @@
 import { Slot, Stack } from 'expo-router';
 import { ActivityIndicator, View, StyleSheet } from 'react-native';
-import { AuthProvider, useAuth } from '@/context/AuthContext'; // Import the new context
+import { AuthProvider, useAuth } from '@/context/AuthContext';
+import { MenuProvider } from 'react-native-popup-menu';
 
 function RootLayoutContent() {
   const { bootstrapping } = useAuth();
@@ -13,13 +14,12 @@ function RootLayoutContent() {
     );
   }
 
-  // Use Stack so you can define screen-specific options
   return (
     <Stack
         screenOptions={{
           headerShown: false,
-          headerBackTitle: 'Back', // Forces the text to say "Back" instead of "(tabs)"
-          headerTintColor: '#007AFF', // Standard iOS Blue
+          headerBackTitle: 'Back',
+          headerTintColor: '#007AFF',
         }}
       >
       <Stack.Screen name="login" />
@@ -37,11 +37,12 @@ function RootLayoutContent() {
   );
 }
 
-// The RootLayout wraps the app in the AuthProvider
 export default function RootLayout() {
   return (
     <AuthProvider>
-      <RootLayoutContent />
+      <MenuProvider>
+        <RootLayoutContent />
+      </MenuProvider>
     </AuthProvider>
   );
 }

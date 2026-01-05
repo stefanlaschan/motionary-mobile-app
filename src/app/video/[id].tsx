@@ -52,6 +52,7 @@ export default function VideoDetailsScreen() {
         <VideoView
         player={player}
         style={styles.videoPlayer}
+        resizeMode="cover"
         fullscreenOptions={{
             allowsFullscreen: true
             }}

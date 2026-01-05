@@ -99,7 +99,6 @@ export default function LoginScreen() {
   );
 }
 
-// ... styles remain unchanged
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F2F2F7' },
   content: { flex: 1, justifyContent: 'center', paddingHorizontal: 32 },

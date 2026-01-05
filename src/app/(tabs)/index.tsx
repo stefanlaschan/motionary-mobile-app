@@ -6,10 +6,19 @@ import {
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter, useFocusEffect } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
+import {
+  Menu,
+  MenuOptions,
+  MenuOption,
+  MenuTrigger,
+} from 'react-native-popup-menu';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getAllVideos, uploadVideo as uploadVideoService, deleteVideo } from '@/services/videoService';
 import { useAuth } from '@/context/AuthContext';
 import type { VideoResponse } from '@/types/video';
+import { useVideoUpload } from '@/hooks/useVideoUpload';
+import { useVideos } from '@/hooks/useVideos';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -20,6 +29,7 @@ export default function HomeScreen() {
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const { handleLogout } = useAuth();
+  const insets = useSafeAreaInsets();
 
 useFocusEffect(
   useCallback(() => {
@@ -159,13 +169,25 @@ const onRefresh = useCallback(async () => {
               </View>
             )}
           </View>
+          <Menu>
+            <MenuTrigger style={styles.deleteIconButton}>
+              <MaterialIcons name="more-vert" size={22} color="#C7C7CC" />
+            </MenuTrigger>
 
-          <TouchableOpacity
-            onPress={() => handleDeleteVideo(item.id)}
-            style={styles.deleteIconButton}
-          >
-            <MaterialIcons name="more-vert" size={22} color="#C7C7CC" />
-          </TouchableOpacity>
+            <MenuOptions customStyles={{ optionsContainer: styles.menuOptions }}>
+              <MenuOption onSelect={() => console.log("edit")} style={styles.menuItem}>
+                <MaterialIcons name="edit" size={18} color="#007AFF" />
+                <Text style={styles.menuText}>Edit</Text>
+              </MenuOption>
+
+              <View style={styles.divider} />
+
+              <MenuOption onSelect={() => handleDeleteVideo(item.id)} style={styles.menuItem}>
+                <MaterialIcons name="delete-outline" size={18} color="#FF3B30" />
+                <Text style={[styles.menuText, { color: '#FF3B30' }]}>Delete</Text>
+              </MenuOption>
+            </MenuOptions>
+          </Menu>
         </View>
       </TouchableOpacity>
     );
@@ -184,9 +206,6 @@ const onRefresh = useCallback(async () => {
       <View style={styles.container}>
         {/* HEADER SECTION - Matches Profile Header */}
         <View style={styles.header}>
-          <View>
-            <Text style={styles.headerTitle}>Practice Videos</Text>
-          </View>
           <TouchableOpacity
             onPress={handlePickVideo}
             disabled={uploading}
@@ -201,7 +220,7 @@ const onRefresh = useCallback(async () => {
         </View>
 
         {/* SEARCH & FILTERS SECTION */}
-        <View style={styles.filterSection}>
+        <View style={styles.filterSection, { paddingTop: insets.top + 10 }}>
           <View style={styles.searchBar}>
             <MaterialIcons name="search" size={20} color="#8E8E93" />
             <TextInput
@@ -261,8 +280,22 @@ const onRefresh = useCallback(async () => {
   }
 
   const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#F8F9FA' },
-    centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+    // --- Global & Layout ---
+    container: {
+      flex: 1,
+      backgroundColor: '#F8F9FA',
+    },
+    centerContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    listContent: {
+      paddingTop: 15,
+      paddingBottom: 40,
+    },
+
+    // --- Header Section ---
     header: {
       flexDirection: 'row',
       justifyContent: 'space-between',
@@ -270,34 +303,208 @@ const onRefresh = useCallback(async () => {
       paddingHorizontal: 20,
       paddingTop: 60,
       paddingBottom: 20,
-      backgroundColor: '#FFFFFF'
+      backgroundColor: '#FFFFFF',
     },
-    headerTitle: { fontSize: 28, fontWeight: '800', color: '#1C1C1E' },
-    addButton: { backgroundColor: '#007AFF', borderRadius: 12, width: 44, height: 44, justifyContent: 'center', alignItems: 'center', elevation: 4, shadowColor: '#007AFF', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8 },
-    filterSection: { backgroundColor: '#FFFFFF', paddingBottom: 15, borderBottomLeftRadius: 24, borderBottomRightRadius: 24, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 3 },
-    searchBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F2F2F7', marginHorizontal: 20, paddingHorizontal: 12, paddingVertical: 10, borderRadius: 14, marginBottom: 15 },
-    searchInput: { flex: 1, marginLeft: 8, fontSize: 16, color: '#1C1C1E' },
-    tagList: { paddingHorizontal: 15 },
-    filterTag: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: '#F2F2F7', marginRight: 8, borderWidth: 1, borderColor: 'transparent' },
-    filterTagSelected: { backgroundColor: '#E8F2FF', borderColor: '#007AFF' },
-    filterTagText: { fontSize: 14, fontWeight: '600', color: '#8E8E93' },
-    filterTagTextSelected: { color: '#007AFF' },
-    videoCard: { backgroundColor: '#FFFFFF', marginHorizontal: 20, marginBottom: 12, borderRadius: 20, padding: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
-    videoContent: { flexDirection: 'row', alignItems: 'center' },
-    thumbnailContainer: { width: 60, height: 60, borderRadius: 14, backgroundColor: '#F0F7FF', justifyContent: 'center', alignItems: 'center' },
-    videoInfo: { flex: 1, marginLeft: 16 },
-    videoName: { fontSize: 17, fontWeight: '700', color: '#1C1C1E', marginBottom: 2 },
-    metaRow: { flexDirection: 'row', alignItems: 'center' },
-    videoDate: { fontSize: 13, color: '#8E8E93' },
-    videoSize: { fontSize: 13, color: '#8E8E93' },
-    dot: { width: 3, height: 3, borderRadius: 1.5, backgroundColor: '#C7C7CC', marginHorizontal: 6 },
-    tagsContainer: { flexDirection: 'row', marginTop: 8 },
-    tag: { backgroundColor: '#F2F2F7', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, marginRight: 6 },
-    tagText: { fontSize: 11, fontWeight: '600', color: '#3A3A3C', textTransform: 'uppercase' },
-    deleteIconButton: { padding: 4 },
-    listContent: { paddingTop: 15, paddingBottom: 40 },
-    emptyContainer: { alignItems: 'center', marginTop: 80, paddingHorizontal: 40 },
-    emptyIconBox: { width: 100, height: 100, borderRadius: 50, backgroundColor: '#F2F2F7', justifyContent: 'center', alignItems: 'center', marginBottom: 20 },
-    emptyText: { fontSize: 18, fontWeight: '700', color: '#1C1C1E' },
-    emptySubtext: { fontSize: 14, color: '#8E8E93', textAlign: 'center', marginTop: 8, lineHeight: 20 },
+    addButton: {
+      backgroundColor: '#007AFF',
+      borderRadius: 12,
+      width: 44,
+      height: 44,
+      justifyContent: 'center',
+      alignItems: 'center',
+      elevation: 4,
+      shadowColor: '#007AFF',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.3,
+      shadowRadius: 8,
+    },
+
+    // --- Filter & Search Section ---
+    filterSection: {
+      backgroundColor: '#FFFFFF',
+      paddingBottom: 15,
+      borderBottomLeftRadius: 24,
+      borderBottomRightRadius: 24,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.05,
+      shadowRadius: 10,
+      elevation: 3,
+    },
+    searchBar: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: '#F2F2F7',
+      marginHorizontal: 20,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      borderRadius: 14,
+      marginBottom: 15,
+    },
+    searchInput: {
+      flex: 1,
+      marginLeft: 8,
+      fontSize: 16,
+      color: '#1C1C1E',
+    },
+    tagList: {
+      paddingHorizontal: 15,
+    },
+    filterTag: {
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      borderRadius: 20,
+      backgroundColor: '#F2F2F7',
+      marginRight: 8,
+      borderWidth: 1,
+      borderColor: 'transparent',
+    },
+    filterTagSelected: {
+      backgroundColor: '#E8F2FF',
+      borderColor: '#007AFF',
+    },
+    filterTagText: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: '#8E8E93',
+    },
+    filterTagTextSelected: {
+      color: '#007AFF',
+    },
+
+    // --- Video Card ---
+    videoCard: {
+      backgroundColor: '#FFFFFF',
+      marginHorizontal: 20,
+      marginBottom: 12,
+      borderRadius: 20,
+      padding: 12,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.05,
+      shadowRadius: 8,
+      elevation: 2,
+    },
+    videoContent: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    thumbnailContainer: {
+      width: 60,
+      height: 60,
+      borderRadius: 14,
+      backgroundColor: '#F0F7FF',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    videoInfo: {
+      flex: 1,
+      marginLeft: 16,
+    },
+    videoName: {
+      fontSize: 17,
+      fontWeight: '700',
+      color: '#1C1C1E',
+      marginBottom: 2,
+    },
+    metaRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    videoDate: {
+      fontSize: 13,
+      color: '#8E8E93',
+    },
+    videoSize: {
+      fontSize: 13,
+      color: '#8E8E93',
+    },
+    dot: {
+      width: 3,
+      height: 3,
+      borderRadius: 1.5,
+      backgroundColor: '#C7C7CC',
+      marginHorizontal: 6,
+    },
+    tagsContainer: {
+      flexDirection: 'row',
+      marginTop: 8,
+    },
+    tag: {
+      backgroundColor: '#F2F2F7',
+      paddingHorizontal: 8,
+      paddingVertical: 3,
+      borderRadius: 6,
+      marginRight: 6,
+    },
+    tagText: {
+      fontSize: 11,
+      fontWeight: '600',
+      color: '#3A3A3C',
+      textTransform: 'uppercase',
+    },
+
+    // --- Popup Menu ---
+    menuOptions: {
+      marginTop: 35,
+      borderRadius: 12,
+      padding: 6,
+      width: 140,
+      backgroundColor: '#FFFFFF',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.15,
+      shadowRadius: 10,
+      elevation: 5,
+    },
+    menuItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: 10,
+      gap: 10,
+    },
+    menuText: {
+      fontSize: 16,
+      fontWeight: '500',
+      color: '#000',
+    },
+    divider: {
+      height: StyleSheet.hairlineWidth,
+      backgroundColor: '#E5E5EA',
+      marginHorizontal: 8,
+    },
+    deleteIconButton: {
+      padding: 8,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+
+    // --- Empty State ---
+    emptyContainer: {
+      alignItems: 'center',
+      marginTop: 80,
+      paddingHorizontal: 40,
+    },
+    emptyIconBox: {
+      width: 100,
+      height: 100,
+      borderRadius: 50,
+      backgroundColor: '#F2F2F7',
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginBottom: 20,
+    },
+    emptyText: {
+      fontSize: 18,
+      fontWeight: '700',
+      color: '#1C1C1E',
+    },
+    emptySubtext: {
+      fontSize: 14,
+      color: '#8E8E93',
+      textAlign: 'center',
+      marginTop: 8,
+      lineHeight: 20,
+    },
   });
+
