@@ -75,17 +75,6 @@ export const uploadVideo = async (
   return response.json();
 };
 
-export const createVideoWithUrl = async (data: VideoCreateRequest): Promise<VideoResponse> => {
-  const response = await fetch(`${API_BASE_URL}/videos/url`, {
-    method: 'POST',
-    headers: await getAuthHeaders(),
-    body: JSON.stringify(data),
-  });
-
-  if (!response.ok) throw new Error(`Failed to create video: ${response.status}`);
-  return response.json();
-};
-
 export const deleteVideo = async (id: string): Promise<void> => {
   const response = await fetch(`${API_BASE_URL}/videos/${id}`, {
     method: 'DELETE',

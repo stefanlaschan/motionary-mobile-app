@@ -2,7 +2,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
 
 const AUTH_API_BASE_URL = 'http://localhost:8082';
-const AUTH_TOKENS_KEY = 'authTokens';
 
 export interface LoginRequest {
   username: string;

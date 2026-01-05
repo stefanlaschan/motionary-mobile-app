@@ -49,7 +49,13 @@ export default function VideoDetailsScreen() {
       <Stack.Screen options={{ title: video.name }} />
 
       <View style={styles.videoWrapper}>
-        <VideoView player={player} style={styles.videoPlayer} allowsFullscreen />
+        <VideoView
+        player={player}
+        style={styles.videoPlayer}
+        fullscreenOptions={{
+            allowsFullscreen: true
+            }}
+        />
       </View>
 
       <View style={styles.detailsContainer}>
@@ -83,7 +89,6 @@ const DetailRow = ({ label, value, icon }: { label: string, value?: string, icon
   </View>
 );
 
-// Reuse your previously defined styles here...
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F2F2F7' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },

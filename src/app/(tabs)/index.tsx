@@ -1,10 +1,10 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity, StyleSheet,
-  TextInput, ActivityIndicator, RefreshControl, Alert,
+  TextInput, ActivityIndicator, RefreshControl, Alert, Platform
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useRouter, useFocusEffect } from 'expo-router'; // 1. Expo Router hooks
+import { useRouter, useFocusEffect } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 
 import { getAllVideos, uploadVideo as uploadVideoService, deleteVideo } from '@/services/videoService';
@@ -21,17 +21,15 @@ export default function HomeScreen() {
   const [uploading, setUploading] = useState(false);
   const { handleLogout } = useAuth();
 
-// 1. Initial/Focus Load: Refreshes when you enter the tab
 useFocusEffect(
   useCallback(() => {
     loadVideos(true);
   }, [])
 );
 
-// 2. Real-time Search: Refreshes as you type
 useEffect(() => {
   loadVideos(true);
-}, [searchQuery, selectedTag]); // Triggers on every keystroke or tag change
+}, [searchQuery, selectedTag]);
 
 const loadVideos = async (isSilent = false) => {
   try {
@@ -52,9 +50,9 @@ const loadVideos = async (isSilent = false) => {
 
 const onRefresh = useCallback(async () => {
   setRefreshing(true);
-  await loadVideos(true); // Pass true to avoid full-screen loading state
+  await loadVideos(true);
   setRefreshing(false);
-}, [searchQuery, selectedTag]); // Add dependencies for stability
+}, [searchQuery, selectedTag]);
 
   const handlePickVideo = async () => {
     try {
@@ -130,129 +128,176 @@ const onRefresh = useCallback(async () => {
     return Array.from(tags).sort();
   };
 
-  const renderVideoItem = ({ item }: { item: VideoResponse }) => (
-    <TouchableOpacity
-      style={styles.videoCard}
-      onPress={() => handleShowVideoDetails(item)} // 4. Added Card Press
-    >
-      <View style={styles.videoContent}>
-        <MaterialIcons name="movie" size={40} color="#007AFF" />
-        <View style={styles.videoInfo}>
-          <Text style={styles.videoName} numberOfLines={2}>{item.name}</Text>
-          {item.tags && item.tags.length > 0 && (
-            <View style={styles.tagsContainer}>
-              {item.tags.map((tag, idx) => (
-                <View key={idx} style={styles.tag}>
-                  <Text style={styles.tagText}>{tag}</Text>
-                </View>
-              ))}
+  const renderVideoItem = ({ item }) => (
+      <TouchableOpacity
+        style={styles.videoCard}
+        onPress={() => handleShowVideoDetails(item)}
+        activeOpacity={0.7}
+      >
+        <View style={styles.videoContent}>
+          {/* Placeholder for Thumbnail/Icon */}
+          <View style={styles.thumbnailContainer}>
+            <MaterialIcons name="play-circle-filled" size={32} color="#007AFF" />
+          </View>
+
+          <View style={styles.videoInfo}>
+            <Text style={styles.videoName} numberOfLines={1}>{item.name}</Text>
+
+            <View style={styles.metaRow}>
+              <Text style={styles.videoDate}>{new Date(item.createdAt).toLocaleDateString()}</Text>
+              <View style={styles.dot} />
+              <Text style={styles.videoSize}>{((item.fileSize || 0) / 1024 / 1024).toFixed(1)} MB</Text>
             </View>
-          )}
-          <Text style={styles.videoDate}>{new Date(item.createdAt).toLocaleDateString()}</Text>
+
+            {item.tags && item.tags.length > 0 && (
+              <View style={styles.tagsContainer}>
+                {item.tags.slice(0, 3).map((tag, idx) => (
+                  <View key={idx} style={styles.tag}>
+                    <Text style={styles.tagText}>{tag}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
+          </View>
+
+          <TouchableOpacity
+            onPress={() => handleDeleteVideo(item.id)}
+            style={styles.deleteIconButton}
+          >
+            <MaterialIcons name="more-vert" size={22} color="#C7C7CC" />
+          </TouchableOpacity>
         </View>
-        <TouchableOpacity
-          onPress={() => handleDeleteVideo(item.id)}
-          style={styles.deleteButton}
-        >
-          <MaterialIcons name="delete" size={24} color="#FF3B30" />
-        </TouchableOpacity>
-      </View>
-    </TouchableOpacity>
-  );
+      </TouchableOpacity>
+    );
 
-  const allTags = getAllTags();
+    const allTags = getAllTags();
 
-  if (loading && !refreshing) {
+    if (loading && !refreshing) {
+      return (
+        <View style={styles.centerContainer}>
+          <ActivityIndicator size="large" color="#007AFF" />
+        </View>
+      );
+    }
+
     return (
-      <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#007AFF" />
+      <View style={styles.container}>
+        {/* HEADER SECTION - Matches Profile Header */}
+        <View style={styles.header}>
+          <View>
+            <Text style={styles.headerTitle}>Practice Videos</Text>
+          </View>
+          <TouchableOpacity
+            onPress={handlePickVideo}
+            disabled={uploading}
+            style={styles.addButton}
+          >
+            {uploading ? (
+              <ActivityIndicator size="small" color="#FFF" />
+            ) : (
+              <MaterialIcons name="add" size={28} color="#FFF" />
+            )}
+          </TouchableOpacity>
+        </View>
+
+        {/* SEARCH & FILTERS SECTION */}
+        <View style={styles.filterSection}>
+          <View style={styles.searchBar}>
+            <MaterialIcons name="search" size={20} color="#8E8E93" />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search your library..."
+              placeholderTextColor="#8E8E93"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchQuery('')}>
+                <MaterialIcons name="cancel" size={20} color="#C7C7CC" />
+              </TouchableOpacity>
+            )}
+          </View>
+
+          {allTags.length > 0 && (
+            <FlatList
+              horizontal
+              data={allTags}
+              keyExtractor={(item) => item}
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.tagList}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={[styles.filterTag, selectedTag === item && styles.filterTagSelected]}
+                  onPress={() => setSelectedTag(selectedTag === item ? null : item)}
+                >
+                  <Text style={[styles.filterTagText, selectedTag === item && styles.filterTagTextSelected]}>
+                    {item}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            />
+          )}
+        </View>
+
+        <FlatList
+          data={videos}
+          renderItem={renderVideoItem}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#007AFF" />}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <View style={styles.emptyIconBox}>
+                <MaterialIcons name="video-library" size={48} color="#D1D1D6" />
+              </View>
+              <Text style={styles.emptyText}>No videos found</Text>
+              <Text style={styles.emptySubtext}>Upload your first practice session to get started.</Text>
+            </View>
+          }
+        />
       </View>
     );
   }
 
-  return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Practice Library</Text>
-        <TouchableOpacity onPress={handlePickVideo} disabled={uploading}>
-          {uploading ? <ActivityIndicator size="small" /> : <MaterialIcons name="add-circle" size={32} color="#007AFF" />}
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.searchContainer}>
-        <MaterialIcons name="search" size={20} color="#8E8E93" />
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search videos..."
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-        />
-        {searchQuery.length > 0 && (
-          <TouchableOpacity onPress={() => setSearchQuery('')}>
-            <MaterialIcons name="close" size={20} color="#8E8E93" />
-          </TouchableOpacity>
-        )}
-      </View>
-
-      {allTags.length > 0 && (
-        <View style={styles.tagsFilterContainer}>
-          <FlatList
-            horizontal
-            data={allTags}
-            keyExtractor={(item) => item}
-            showsHorizontalScrollIndicator={false}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                style={[styles.filterTag, selectedTag === item && styles.filterTagSelected]}
-                onPress={() => setSelectedTag(selectedTag === item ? null : item)}
-              >
-                <Text style={[styles.filterTagText, selectedTag === item && styles.filterTagTextSelected]}>
-                  {item}
-                </Text>
-              </TouchableOpacity>
-            )}
-          />
-        </View>
-      )}
-
-      <FlatList
-        data={videos}
-        renderItem={renderVideoItem}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContent}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <MaterialIcons name="video-library" size={64} color="#C7C7CC" />
-            <Text style={styles.emptyText}>No videos yet</Text>
-          </View>
-        }
-      />
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F2F2F7' },
-  centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, paddingTop: 60, backgroundColor: '#FFF' },
-  headerTitle: { fontSize: 28, fontWeight: 'bold', color: '#1C1C1E' },
-  searchContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#E5E5EA', margin: 15, padding: 10, borderRadius: 10 },
-  searchInput: { flex: 1, marginLeft: 10, fontSize: 17 },
-  tagsFilterContainer: { marginBottom: 10 },
-  filterTag: { paddingHorizontal: 15, paddingVertical: 8, borderRadius: 20, backgroundColor: '#FFF', marginHorizontal: 5, borderWidth: 1, borderColor: '#E5E5EA' },
-  filterTagSelected: { backgroundColor: '#007AFF', borderColor: '#007AFF' },
-  filterTagTextSelected: { color: '#FFF' },
-  videoCard: { backgroundColor: '#FFF', marginHorizontal: 15, marginBottom: 10, borderRadius: 12, padding: 15 },
-  videoContent: { flexDirection: 'row', alignItems: 'center' },
-  videoInfo: { flex: 1, marginLeft: 15 },
-  videoName: { fontSize: 17, fontWeight: '600' },
-  tagsContainer: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 4 },
-  tag: { backgroundColor: '#E5E5EA', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 4, marginRight: 4, marginTop: 4 },
-  tagText: { fontSize: 12, color: '#3A3A3C' },
-  videoDate: { fontSize: 13, color: '#8E8E93', marginTop: 8 },
-  deleteButton: { padding: 5 },
-  listContent: { paddingBottom: 20 },
-  emptyContainer: { alignItems: 'center', marginTop: 100 },
-  emptyText: { fontSize: 18, color: '#8E8E93', marginTop: 10 }
-});
+  const styles = StyleSheet.create({
+    container: { flex: 1, backgroundColor: '#F8F9FA' },
+    centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'flex-end',
+      paddingHorizontal: 20,
+      paddingTop: 60,
+      paddingBottom: 20,
+      backgroundColor: '#FFFFFF'
+    },
+    headerTitle: { fontSize: 28, fontWeight: '800', color: '#1C1C1E' },
+    addButton: { backgroundColor: '#007AFF', borderRadius: 12, width: 44, height: 44, justifyContent: 'center', alignItems: 'center', elevation: 4, shadowColor: '#007AFF', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8 },
+    filterSection: { backgroundColor: '#FFFFFF', paddingBottom: 15, borderBottomLeftRadius: 24, borderBottomRightRadius: 24, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 3 },
+    searchBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F2F2F7', marginHorizontal: 20, paddingHorizontal: 12, paddingVertical: 10, borderRadius: 14, marginBottom: 15 },
+    searchInput: { flex: 1, marginLeft: 8, fontSize: 16, color: '#1C1C1E' },
+    tagList: { paddingHorizontal: 15 },
+    filterTag: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: '#F2F2F7', marginRight: 8, borderWidth: 1, borderColor: 'transparent' },
+    filterTagSelected: { backgroundColor: '#E8F2FF', borderColor: '#007AFF' },
+    filterTagText: { fontSize: 14, fontWeight: '600', color: '#8E8E93' },
+    filterTagTextSelected: { color: '#007AFF' },
+    videoCard: { backgroundColor: '#FFFFFF', marginHorizontal: 20, marginBottom: 12, borderRadius: 20, padding: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
+    videoContent: { flexDirection: 'row', alignItems: 'center' },
+    thumbnailContainer: { width: 60, height: 60, borderRadius: 14, backgroundColor: '#F0F7FF', justifyContent: 'center', alignItems: 'center' },
+    videoInfo: { flex: 1, marginLeft: 16 },
+    videoName: { fontSize: 17, fontWeight: '700', color: '#1C1C1E', marginBottom: 2 },
+    metaRow: { flexDirection: 'row', alignItems: 'center' },
+    videoDate: { fontSize: 13, color: '#8E8E93' },
+    videoSize: { fontSize: 13, color: '#8E8E93' },
+    dot: { width: 3, height: 3, borderRadius: 1.5, backgroundColor: '#C7C7CC', marginHorizontal: 6 },
+    tagsContainer: { flexDirection: 'row', marginTop: 8 },
+    tag: { backgroundColor: '#F2F2F7', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, marginRight: 6 },
+    tagText: { fontSize: 11, fontWeight: '600', color: '#3A3A3C', textTransform: 'uppercase' },
+    deleteIconButton: { padding: 4 },
+    listContent: { paddingTop: 15, paddingBottom: 40 },
+    emptyContainer: { alignItems: 'center', marginTop: 80, paddingHorizontal: 40 },
+    emptyIconBox: { width: 100, height: 100, borderRadius: 50, backgroundColor: '#F2F2F7', justifyContent: 'center', alignItems: 'center', marginBottom: 20 },
+    emptyText: { fontSize: 18, fontWeight: '700', color: '#1C1C1E' },
+    emptySubtext: { fontSize: 14, color: '#8E8E93', textAlign: 'center', marginTop: 8, lineHeight: 20 },
+  });

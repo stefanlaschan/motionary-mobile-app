@@ -5,11 +5,11 @@ import {
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useAuth } from '@/context/AuthContext'; // 1. Use the shared context
+import { useAuth } from '@/context/AuthContext';
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { onLogin } = useAuth(); // 2. Pull onLogin from Context
+  const { onLogin } = useAuth();
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -24,10 +24,8 @@ export default function LoginScreen() {
 
     try {
       setLoading(true);
-      // 3. Call the refactored function
       await onLogin(username.trim(), password);
 
-      // 4. Navigate away
       router.replace('/(tabs)');
     } catch (error) {
       Alert.alert('Login Failed', error instanceof Error ? error.message : 'Invalid credentials');
